@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>購物車系統</title>
+  <style>
+    /* Previous styles remain unchanged. */
+
+    /* Add styles for the shopping cart table */
+    .cart-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .cart-table th, .cart-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .cart-table th {
+      background-color: #f2f2f2;
+    }
+
+    /* Style for the checkout button */
+    .checkout-btn {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      margin: 20px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      float: right;
+    }
+
+    /* Clear floats */
+    .clearfix::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top bar and navigation from the provided template -->
+
+<div class="top-bar">
+  <!-- Content remains unchanged -->
+</div>
+
+<nav>
+  <!-- Navigation remains unchanged -->
+</nav>
+
+<!-- Shopping Cart Section -->
+<div class="cart-section">
+  <h2>您的購物車</h2>
+  <table class="cart-table">
+    <tr>
+      <th>商品</th>
+      <th>數量</th>
+      <th>單價</th>
+      <th>總計</th>
+      <th>操作</th>
+    </tr>
+    <tr>
+      <td>商品名稱1</td>
+      <td><input type="number" value="1"></td>
+      <td>$50</td>
+      <td>$50</td>
+      <td><button type="button">移除</button></td>
+    </tr>
+    <!-- Repeat rows for each cart item -->
+  </table>
+  <div class="clearfix">
+    <button class="checkout-btn">結帳</button>
+  </div>
+</div>
+
+<script>
+  // JavaScript code for dynamic cart functionality can be added here
+</script>
+
+</body>
+</html>
