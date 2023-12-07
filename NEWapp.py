@@ -1,25 +1,38 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
+import psycopg2
+import psycopg2.extras
 
-DB_NAME = 'kfc'
+
+
+
+DB_NAME = 'kfc會員'
 DB_USER = 'postgres'
-DB_PASS = 'william1018'
+DB_PASS = 'Leo48923554'
 DB_HOST = 'localhost'
+DB_PORT = '5432'
 
 app = Flask(__name__, template_folder='templates')
+app.secret_key = 'william1018'
+
+
 
 @app.route("/")
 def home():
     return render_template('首頁.html')
   
-@app.route("/首頁")
-def 首頁():
+@app.route("/首頁.html")
+def firstpage():
     return render_template('首頁.html')
 
 @app.route("/個人餐.html")
 def home1():
     return render_template('個人餐.html')
 
+
+@app.route("/會員.html")
+def page_one():
+    return render_template('會員.html')
 
 @app.route("/多人餐.html")
 def page_2():
@@ -40,10 +53,18 @@ def page_5():
 @app.route("/會員登入.html")
 def page_6():
     return render_template('會員登入.html')
+
   
 @app.route("/會員已登入.html")
 def page_7():
-    return render_template('會員已登入.html')
+    user_id = get_user_id()
+    user_name = get_user_name()
+    phone = get_phone()
+    email = get_email()
+    sex = get_sex()
+    birth = get_birth()
+    return render_template('會員已登入.html', user_name=user_name ,phone = phone, email = email,user_id = user_id,sex = sex,birth = birth)
+
   
 @app.route("/結帳.html")
 def page_8():
@@ -52,7 +73,7 @@ def page_8():
 @app.route("/購物車.html")
 def page_9():
     return render_template('購物車.html')
-  
+
 @app.route("/餐車.html")
 def page_10():
     return render_template('餐車.html')
@@ -61,6 +82,18 @@ def page_10():
 def page_11():
     return render_template('餐點內容.html')
 
+@app.route("/首頁2.html")
+def page_12():
+    return render_template('首頁2.html')
+
+@app.route("/單點.html")
+def page_13():
+    return render_template('單點.html')
+
+@app.route("/修改資料.html")
+def page_14():
+    Acc=get_phone() or get_email()
+    return render_template('修改資料.html',Acc = Acc)
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -69,7 +102,6 @@ def register():
         mobile_phone = request.form['MobilePhone']
         email = request.form['Email']
         password = request.form['Password']
-        cpassword = request.form['cPassword']
         name = request.form['Name']
         sex = request.form['Sex']
         birthday_y = request.form['BirthdayY']
@@ -77,32 +109,34 @@ def register():
         birthday_d = request.form['BirthdayD']
         # You would construct the birthday from the three components here
         birthday = f"{birthday_y}-{birthday_m}-{birthday_d}"
+        if not all([mobile_phone, email, password, name, sex, birthday]):
+            flash("未填寫所有欄位。", 'error')
 
-        # Connect to the database
-        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        else:
+            conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+            cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # Check if email or phone already exists in the database
-        cur.execute("SELECT * FROM user_table WHERE email = %s OR phone = %s", (email, mobile_phone))
-        existing_user = cur.fetchone()
-        
-        if existing_user:
+            # Check if email or phone already exists in the database
+            cur.execute("SELECT * FROM user_table WHERE email = %s OR phone = %s", (email, mobile_phone))
+            existing_user = cur.fetchone()
+
+            if existing_user:
+                conn.close()
+                return render_template('資料重複.html')
+
+            # Insert data into the database
+            cur.execute("""
+                INSERT INTO user_table (phone, email, pwd, user_name, sex, birth)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (mobile_phone, email, password, name, sex, birthday))
+
+            # Commit the changes and close the connection
+            conn.commit()
+            cur.close()
             conn.close()
-            return render_template('資料重複.html')
 
-        # Insert data into the database
-        cur.execute("""
-            INSERT INTO user_table (phone, email, pwd, user_name, sex, birth, on_line)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (mobile_phone, email, password, name, sex, birthday, False))
-
-        # Commit the changes and close the connection
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        # Redirect to a new page or render a template with a success message
-        return render_template('會員登入.html')
+            # Redirect to a new page or render a template with a success message
+            return render_template('會員登入.html')
 
     # If the request is GET, just render the registration form
     return render_template('加入會員.html')
@@ -119,27 +153,139 @@ def login():
 
         cur.execute("SELECT * FROM user_table WHERE email = %s OR phone = %s", (account, account))
         existing_user = cur.fetchone()
-        
+
         if existing_user:
-            # 如果帳戶符合電子郵件或手機號碼，則檢查密碼是否相符
-            stored_password = existing_user['pwd']  # 假設 'password' 是資料表中的欄位名稱
+            stored_password = existing_user['pwd']
             if password == stored_password:
-                
+                # 登錄成功，將 user_id 存儲到 session 中
+                session['user_id'] = existing_user['user_id']
+
                 cur.execute("""
                     UPDATE user_table
-                    SET on_line = %s
-                    WHERE on_line = %s
+                    SET online = %s
+                    WHERE online = %s
                 """, (True, False))
 
                 conn.commit()
                 conn.close()
-                return render_template('首頁.html')  # 如果密碼相符，則呈現成功頁面
+                return redirect('/首頁2.html')
             else:
                 conn.close()
                 return render_template('會員登入.html', error_message=2)
         else:
             conn.close()
             return render_template('會員登入.html', error_message=1)
+
+    return render_template('會員登入.html')
+
+# 定義函數以獲取 user_name
+def get_user_name():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    user_id = session.get('user_id', None)
+
+    if user_id:
+        cur.execute("SELECT user_name FROM user_table WHERE user_id = %s", (user_id,))
+        user = cur.fetchone()
+        if user:
+            return user['user_name']
+
+    conn.close()
+    return None
+
+def get_phone():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    user_id = session.get('user_id', None)
+
+    if user_id:
+        cur.execute("SELECT phone FROM user_table WHERE user_id = %s", (user_id,))
+        user = cur.fetchone()
+        if user:
+            return user['phone']
+
+    conn.close()
+    return None
+
+def get_email():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    user_id = session.get('user_id', None)
+
+    if user_id:
+        cur.execute("SELECT email FROM user_table WHERE user_id = %s", (user_id,))
+        user = cur.fetchone()
+        if user:
+            return user['email']
+
+    conn.close()
+    return None
+
+def get_user_id():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    user_id = session.get('user_id', None)
+
+    if user_id:
+        cur.execute("SELECT user_id FROM user_table WHERE user_id = %s", (user_id,))
+        user = cur.fetchone()
+        if user:
+            return user['user_id']
+
+    conn.close()
+    return None
+
+def get_sex():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    user_id = session.get('user_id', None)
+
+    if user_id:
+        cur.execute("SELECT sex FROM user_table WHERE user_id = %s", (user_id,))
+        user = cur.fetchone()
+        if user:
+            return user['sex']
+
+    conn.close()
+    return None
+
+def get_birth():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    user_id = session.get('user_id', None)
+
+    if user_id:
+        cur.execute("SELECT birth FROM user_table WHERE user_id = %s", (user_id,))
+        user = cur.fetchone()
+        if user:
+            return user['birth']
+
+    conn.close()
+    return None
+
+def get_pwd():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    user_id = session.get('user_id', None)
+
+    if user_id:
+        cur.execute("SELECT pwd FROM user_table WHERE user_id = %s", (user_id,))
+        user = cur.fetchone()
+        if user:
+            return user['pwd']
+
+    conn.close()
+    return None
+
+
+
 
 @app.route("/forgetpass", methods=['GET', 'POST'])
 def forgetpass():
@@ -153,7 +299,7 @@ def forgetpass():
         existing_user = cur.fetchone()
         
         if existing_user:
-            return render_template('修改密碼.html', Acc=account)
+            return render_template('修改資料.html')
         else:
             conn.close()
             return render_template('忘記密碼.html', message=2)
@@ -162,16 +308,27 @@ def forgetpass():
 def changepass():
     if request.method == 'POST':
         password = request.form['pwd']
+    #    sex = request.form['sex']
+   #     birth = request.form['birth']
+        phone = request.form['phone']
+        email = request.form['email']
+        user_name = request.form['user_name']
         account = request.form['acc']
-
+        
+        
         conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         
         cur.execute("""
                     UPDATE user_table
-                    SET pwd = %s
+                    SET pwd = %s,
+                        phone = %s,
+                        email = %s,
+                        user_name = %s
                     WHERE email = %s OR phone = %s
-                """, (password, account, account))
+                """, (password,  phone, email, user_name, account, account))
+        
+        
 
         conn.commit()
         conn.close()
@@ -179,17 +336,15 @@ def changepass():
     
 @app.route('/order_detail', methods=["GET", 'POST'])
 def order_detail():
-    print("a")
     if request.method == 'POST':
-        print("b")
         data = request.get_json()
         restaurant = data.get('restaurant')
         date = data.get('date')
         time = data.get('time')
         method = data.get('method')
         
-        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
+        cur = conn.cursor()
         
         try:
             cur.execute("""
@@ -205,5 +360,4 @@ def order_detail():
         
         except Exception as e:
             return f"Error: {str(e)}"
-if __name__ == "__main__":
-    app.run(debug=True)
+        
