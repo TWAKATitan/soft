@@ -511,8 +511,8 @@
         display: none !important
     }
 </style>
-<meta http-equiv=content-security-policy
-    content="default-src 'none'; font-src 'self' data:; img-src 'self' data:; style-src 'unsafe-inline'; media-src 'self' data:; script-src 'unsafe-inline' data:; object-src 'self' data:; frame-src 'self' data:;">
+<!-- <meta http-equiv=content-security-policy
+    content="default-src 'none'; font-src 'self' data:; img-src 'self' data:; style-src 'unsafe-inline'; media-src 'self' data:; script-src 'unsafe-inline' data:; object-src 'self' data:; frame-src 'self' data:;"> -->
 <style>
     img[src="data:,"],
     source[src="data:,"] {
@@ -3347,7 +3347,7 @@
                         </div>
 
                         <div id=pop-Lct_btnDeliveryConfirmType2 class=b_btn>
-                            <button type="button" id="qq">前往訂餐</button>
+                            <a href="個人餐.html" id="qq">前往訂餐</a>
                         </div>
                         <div id=pop-Lct_StartOrderMessageAllType2>
 
@@ -3367,13 +3367,19 @@
                                         class=pac-target-input autocomplete=off value>
                                 </div>
                             </div>
-
+                            <div class="pickup-details">
+                                <div class="pickup-date">
+                                    <label for="pickupDate">取餐日期：</label>
+                                    <input type="date" id="pickupDate2" name="pickupDate">
+                                </div>
+                                <div class="pickup-time">
+                                    <label for="pickupTime">取餐時間：</label>
+                                    <input type="time" id="pickupTime2" name="pickupTime" step="1">
+                                </div>
+                            </div>
                             <div>
                                 <p class=lct_shopmsg id=pop-Lct_ShopsHiddenMsgType1 style=display:none></p>
-                                <div id=pop-Lct_DeliveryAddr_Map_All_Toggle
-                                    class="flip flip_tab2_map site flip_underline">
-                                    <i class="fas fa-paper-plane" aria-hidden=true></i>使用我的位置
-                                </div>
+                                
                                 <div id=pop-Lct_DeliveryAddr_Map_All class="panel panel_tab2_map sf-hidden">
 
 
@@ -3391,7 +3397,7 @@
 
 
                         </div>
-                        <div id=pop-Lct_btnDeliveryConfirmType1 class=b_btn><button>前往訂餐<button></div>
+                        <div id=pop-Lct_btnDeliveryConfirmType1 class=b_btn><a href="個人餐.html" id="qq2">前往訂餐</a></div>
                         <div id=pop-Lct_StartOrderMessageAllType1>
 
                             <div class="panel2 panel_tab2_notice">
@@ -3513,62 +3519,6 @@
 
             // 將當前時間設置為input的值
             $('#pickupTime').val(currentTime);
-        });
-
-        $(document).ready(function () {
-            $('#pop-Lct_btnDeliveryConfirmType1 a').on('click', function (event) {
-                event.preventDefault(); // Prevent the default link behavior if needed
-                var address = $('#pop-Lct_DeliveryFullAddress').val();
-                alert("方式:專業外送")
-                alert("外送地址" + address);
-            });
-        });
-
-        $(document).ready(function () {
-            $('#pop-Lct_btnDeliveryConfirmType2 a').on('click', function (event) {
-                // Get the selected city and district
-                var selectedCity = $('#pop-Lct_selTakeOutAddr1 option:selected').val();
-                var selectedDistrict = $('#pop-Lct_selTakeOutAddr option:selected').text();
-                if (selectedCity === '台北市') {
-                    if (selectedDistrict === '士林區') {
-                        rest = '天母中山餐廳 (美國學校)'
-                    } else if (selectedDistrict === '大同區') {
-                        rest = '台北承德餐廳 (京站對面)'
-                    } else if (selectedDistrict === '大安區') {
-                        rest = '台北台大餐廳 (台灣大學對面)'
-                    }
-                } else if (selectedCity === '新北市') {
-                    if (selectedDistrict === '八里區') {
-                        rest = '新北八里餐廳'
-                    } else if (selectedDistrict === '三重區') {
-                        rest = '三重三和餐廳 (徐匯捷運站)'
-                    } else if (selectedDistrict === '三峽區') {
-                        rest = '三峽北大餐廳 (台北大學)'
-                    }
-                } else if (selectedCity === '桃園市') {
-                    if (selectedDistrict === '八德區') {
-                        rest = '桃園介壽餐廳'
-                    } else if (selectedDistrict === '大園區') {
-                        rest = '桃園大園餐廳 (大園農會對面)'
-                    } else if (selectedDistrict === '大溪區') {
-                        rest = '桃園大溪餐廳'
-                    }
-                }
-
-                // Get the selected date and time
-                var selectedDate = $('#pickupDate').val();
-                var selectedTime = $('#pickupTime').val();
-
-                // Data to be sent in the POST request
-                var postData = {
-                    restaurant: rest,
-                    date: selectDate,
-                    time: selectTime,
-                    method: '預定快取'
-                };
-                // AJAX POST request to app.py 
-
-            });
         });
 
         $(document).ready(function () {
@@ -3739,21 +3689,93 @@
             // Trigger change to ensure initial state does not display shop information
             $('#pop-Lct_selTakeOutAddr').trigger('change');
         });
-        document.getElementById('qq').addEventListener('click', function () {
-            alert("hello");
-            fetch('/order_detail', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ data: "postData" })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === "success") {
-                        console.log(data);
+
+        $(document).ready(function () {
+            $('#qq').on('click', function () {
+                var selectedCity = $('#pop-Lct_selTakeOutAddr1 option:selected').val();
+                var selectedDistrict = $('#pop-Lct_selTakeOutAddr option:selected').text();
+                var rest = '';
+        
+                if (selectedCity === '台北市') {
+                    if (selectedDistrict === '士林區') {
+                        rest = '天母中山餐廳 (美國學校)';
+                    } else if (selectedDistrict === '大同區') {
+                        rest = '台北承德餐廳 (京站對面)';
+                    } else if (selectedDistrict === '大安區') {
+                        rest = '台北台大餐廳 (台灣大學對面)';
                     }
-                })
-                .catch(error => console.error('Error:', error));
-        });
+                } else if (selectedCity === '新北市') {
+                    if (selectedDistrict === '八里區') {
+                        rest = '新北八里餐廳';
+                    } else if (selectedDistrict === '三重區') {
+                        rest = '三重三和餐廳 (徐匯捷運站)';
+                    } else if (selectedDistrict === '三峽區') {
+                        rest = '三峽北大餐廳 (台北大學)';
+                    }
+                } else if (selectedCity === '桃園市') {
+                    if (selectedDistrict === '八德區') {
+                        rest = '桃園介壽餐廳';
+                    } else if (selectedDistrict === '大園區') {
+                        rest = '桃園大園餐廳 (大園農會對面)';
+                    } else if (selectedDistrict === '大溪區') {
+                        rest = '桃園大溪餐廳';
+                    }
+                }
+        
+                var selectedDate = $('#pickupDate').val();
+                var selectedTime = $('#pickupTime').val();
+        
+                var postData = {
+                    restaurant: rest,
+                    date: selectedDate,
+                    time: selectedTime,
+                    method: '預定快取'
+                };
+        
+                $.ajax({
+                    url: '/order_detail',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(postData),
+                    success: function (data) {
+                        if (data.status === 'success') {
+                            console.log(data);
+                        }
+                    },
+                    error: function (error) {
+                        console.error('Error:', error);
+                    }
+                });
+            });
+        });        
+        
+        $(document).ready(function () {
+            $('#qq2').on('click', function () {
+                var Add = $('#pop-Lct_DeliveryFullAddress').val();
+                var selectedDate = $('#pickupDate2').val();
+                var selectedTime = $('#pickupTime2').val();
+        
+                var postData = {
+                    restaurant: Add,
+                    date: selectedDate,
+                    time: selectedTime,
+                    method: '專業外送'
+                };
+        
+                $.ajax({
+                    url: '/order_detail',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(postData),
+                    success: function (data) {
+                        if (data.status === 'success') {
+                            console.log(data);
+                        }
+                    },
+                    error: function (error) {
+                        console.error('Error:', error);
+                    }
+                });
+            });
+        }); 
     </script>
