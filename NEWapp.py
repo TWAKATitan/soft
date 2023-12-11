@@ -3,12 +3,9 @@ import psycopg2
 import psycopg2
 import psycopg2.extras
 
-
-
-
-DB_NAME = 'kfc會員'
+DB_NAME = 'kfc'
 DB_USER = 'postgres'
-DB_PASS = 'Leo48923554'
+DB_PASS = 'william1018'
 DB_HOST = 'localhost'
 DB_PORT = '5432'
 
@@ -68,7 +65,14 @@ def page_7():
   
 @app.route("/結帳.html")
 def page_8():
-    return render_template('結帳.html')
+    user_name = get_user_name()
+    phone = get_phone()
+    email = get_email()
+    method = get_method()
+    restaurant = get_rest()
+    date = get_date()
+    time = get_time()
+    return render_template('結帳.html', user_name=user_name ,phone = phone, email = email, method = method, restaurant = restaurant, time = time, date = date)
   
 @app.route("/購物車.html")
 def page_9():
@@ -160,12 +164,7 @@ def login():
                 # 登錄成功，將 user_id 存儲到 session 中
                 session['user_id'] = existing_user['user_id']
 
-                cur.execute("""
-                    UPDATE user_table
-                    SET online = %s
-                    WHERE online = %s
-                """, (True, False))
-
+                
                 conn.commit()
                 conn.close()
                 return redirect('/首頁2.html')
@@ -177,6 +176,78 @@ def login():
             return render_template('會員登入.html', error_message=1)
 
     return render_template('會員登入.html')
+
+def get_method():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        cur.execute("SELECT pickup_method FROM order_detail ORDER BY order_id DESC LIMIT 1;")
+        first_row = cur.fetchone()
+        if first_row:
+            pickup_method = first_row['pickup_method']
+            return pickup_method
+        else:
+            return None
+    except psycopg2.Error as e:
+        print("Error retrieving pickup method:", e)
+    finally:
+        cur.close()
+        conn.close()
+        
+def get_date():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        cur.execute("SELECT order_date FROM order_detail ORDER BY order_id DESC LIMIT 1;")
+        first_row = cur.fetchone()
+        if first_row:
+            date = first_row['order_date']
+            return date
+        else:
+            return None
+    except psycopg2.Error as e:
+        print("Error retrieving pickup method:", e)
+    finally:
+        cur.close()
+        conn.close()
+        
+def get_time():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        cur.execute("SELECT order_time FROM order_detail ORDER BY order_id DESC LIMIT 1;")
+        first_row = cur.fetchone()
+        if first_row:
+            time = first_row['order_time']
+            return time
+        else:
+            return None
+    except psycopg2.Error as e:
+        print("Error retrieving pickup method:", e)
+    finally:
+        cur.close()
+        conn.close()
+        
+def get_rest():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        cur.execute("SELECT address FROM order_detail ORDER BY order_id DESC LIMIT 1;")
+        first_row = cur.fetchone()
+        if first_row:
+            address = first_row['address']
+            return address
+        else:
+            return None
+    except psycopg2.Error as e:
+        print("Error retrieving pickup method:", e)
+    finally:
+        cur.close()
+        conn.close()
 
 # 定義函數以獲取 user_name
 def get_user_name():
@@ -314,8 +385,7 @@ def changepass():
         email = request.form['email']
         user_name = request.form['user_name']
         account = request.form['acc']
-        
-        
+
         conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         
