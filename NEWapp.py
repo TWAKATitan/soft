@@ -430,4 +430,21 @@ def order_detail():
         
         except Exception as e:
             return f"Error: {str(e)}"
+
+@app.route("/suit", methods=['GET', 'POST'])
+def suit():
+    if request.method == 'POST':
+        套餐 = request.form['套餐']
+
+        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+        cur = conn.cursor()
+
+        cur.execute("""INSERT INTO suit_table (suit_name) VALUES (%s)""", (套餐,))  # Use the variable 套餐1 here
+
+        # Commit the changes and close the connection
+        conn.commit()
+        cur.close()
+        conn.close()
         
+        return render_template('餐點內容.html')
+
