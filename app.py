@@ -407,6 +407,8 @@ def changepass():
         conn.close()
         return render_template('會員登入.html')
     
+
+    
 @app.route('/order_detail', methods=["GET", 'POST'])
 def order_detail():
     if request.method == 'POST':
@@ -513,14 +515,29 @@ def get_food_content():
 
     try:
         
+        food_id = get_food_id()
+        cur.execute("SELECT food_name FROM food_content JOIN suit_id ON food_id = id WHERE food_id = %s ;" % (food_id,))
+        food = cur.fetchall()
+
+        food_content = [item[0] for item in food]
+        print(food_content[0])
+        content1 = food_content[0]
+        return content1
+
+    finally:
+        cur.close()
+        conn.close()
+
+def get_food_id():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
         food_name = get_food_name()
-        food_id = cur.execute("SELECT id FROM suit_id WHERE suit_name = %s",(food_name,))
-        #cur.execute("SELECT food_name FROM food_content WHERE food_id = %s"(id,))
+        cur.execute("SELECT id FROM suit_id WHERE suit_name = %s",(food_name,))
         food = cur.fetchone()
         if food:
             id = food['id']
-            print("fff",id)
-            #content = food['food_name']
             return id
         else:
             print('None')
@@ -528,25 +545,3 @@ def get_food_content():
     finally:
         cur.close()
         conn.close()
-
-'''
-def get_suit_id():
-
-    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    try:
-
-        food_name = get_food_name()
-        cur.execute("SELECT id FROM suit_id WHERE suit_name = %s",(food_name,))
-        food_id = cur.fetchone()
-
-        if food_id:
-            price = food_id['id']
-            return price
-        else:
-            return None
-    finally:
-        cur.close()
-        conn.close()
-'''
