@@ -545,3 +545,29 @@ def get_food_id():
     finally:
         cur.close()
         conn.close()
+
+#加入餐車
+@app.route("/getorder", methods=['GET', 'POST'])
+def get_order():
+    if request.method == 'POST':
+        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    try:
+        food_name = get_food_name()
+        food_price = get_suit_price()
+        cur.execute("INSERT INTO already_order (meal_name, meal_price) VALUES (%s, %s);", (food_name, food_price))
+        cur.execute("UPDATE already_order SET total_price = (SELECT SUM(meal_price) FROM already_order);")
+        price = cur.fetchall()
+
+        
+
+        total_price = price['total_price']
+        print(total_price)
+        return total_price
+
+            
+    finally:   
+        conn.commit()
+        cur.close()
+        conn.close()
+        return render_template('多人餐.html')
