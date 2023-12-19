@@ -14,6 +14,8 @@ app.secret_key = 'edgc2959'
 
 
 
+#-------------------------------HTML Code----------------------------------------------
+
 @app.route("/")
 def home():
     return render_template('首頁.html')
@@ -24,7 +26,8 @@ def firstpage():
 
 @app.route("/個人餐.html")
 def home1():
-    return render_template('個人餐.html')
+    total_price = get_order_price()
+    return render_template('個人餐.html', total_price=total_price)
 
 
 @app.route("/會員.html")
@@ -33,7 +36,8 @@ def page_one():
 
 @app.route("/多人餐.html")
 def page_2():
-    return render_template('多人餐.html')
+    total_price = get_order_price()
+    return render_template('多人餐.html', total_price=total_price)
   
 @app.route("/早餐.html")
 def page_3():
@@ -76,11 +80,13 @@ def page_8():
   
 @app.route("/購物車.html")
 def page_9():
+    
     return render_template('購物車.html')
 
 @app.route("/餐車.html")
 def page_10():
-    return render_template('餐車.html')
+    total_price = get_order_price()
+    return render_template('餐車.html', total_price=total_price)
   
 @app.route("/餐點內容.html")
 def page_11():
@@ -95,12 +101,15 @@ def page_12():
 
 @app.route("/單點.html")
 def page_13():
-    return render_template('單點.html')
+    total_price = get_order_price()
+    return render_template('單點.html', total_price=total_price)
 
 @app.route("/修改資料.html")
 def page_14():
     Acc=get_phone() or get_email()
     return render_template('修改資料.html',Acc = Acc)
+
+#-------------------------------Python code----------------------------------------------
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -570,4 +579,20 @@ def get_order():
         conn.commit()
         cur.close()
         conn.close()
-        return render_template('多人餐.html')
+        return redirect('個人餐.html')
+
+#餐車價格
+def get_order_price():
+        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+
+        cur.execute("SELECT total_price FROM already_order;")
+        price = cur.fetchone()
+
+        total_price = price['total_price']
+  
+        conn.commit()
+        cur.close()
+        conn.close()
+        return total_price
