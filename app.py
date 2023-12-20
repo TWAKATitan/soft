@@ -61,6 +61,11 @@ def page_7():
     birth = get_birth()
     return render_template('會員已登入.html', user_name=user_name ,phone = phone, email = email,user_id = user_id,sex = sex,birth = birth)
 
+global food_list
+global total_price
+total_price=0
+food_list = []
+
   
 @app.route("/結帳.html")
 def page_8():
@@ -75,17 +80,15 @@ def page_8():
   
 @app.route("/購物車.html")
 def page_9():
-    return render_template('購物車.html')
+    food_name = food_list
+    food_price = total_price
+    return render_template('購物車.html',food_name = list(food_name),food_price = food_price)
 
 @app.route("/餐車.html")
 def page_10():
     return render_template('餐車.html')
 
 
-global food_list
-global total_price
-total_price=0
-food_list = []
 
 
 # @app.route("/餐點內容", methods=["GET", "POST"])
@@ -597,8 +600,11 @@ def car():
 
 @app.route('/cart_page', methods=["GET", "POST"])
 def cart_page():
-    global food_list, total_price
-    return render_template('購物車.html', food_list=food_list, total_price=total_price)
+    food_name = ', '.join(food_list)
+    food_price = total_price
+    combo_number = [i+1 for i in range(len(food_list))]
+    combo_data = zip(combo_number, food_list, [total_price]*len(food_list))
+    return render_template('購物車.html',food_name = food_name,food_price = food_price,combo_number = combo_number ,combo_data=combo_data)
 
 
 
