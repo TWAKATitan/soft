@@ -63,8 +63,10 @@ def page_7():
 
 global food_list
 global total_price
+global price_list
 total_price=0
 food_list = []
+price_list = []
 
   
 @app.route("/結帳.html")
@@ -76,7 +78,9 @@ def page_8():
     restaurant = get_rest()
     date = get_date()
     time = get_time()
-    return render_template('結帳.html', user_name=user_name ,phone = phone, email = email, method = method, restaurant = restaurant, time = time, date = date)
+    food_name = ', '.join(food_list)
+    food_price = total_price
+    return render_template('結帳.html', user_name=user_name ,phone = phone, email = email, method = method, restaurant = restaurant, time = time, date = date,food_name = food_name,food_price = food_price)
   
 @app.route("/購物車.html")
 def page_9():
@@ -592,20 +596,36 @@ def car():
         data = request.get_json()
         name = data.get('Name')
         price = data.get('Price')
+        price_list.append(price)
+        name = name.strip()
         food_list.append(name)
         total_price += int(price)
-        print(total_price)
         return redirect(url_for('cart_page'))  # 重定向到'cart_page'路由
     return render_template('購物車.html')
 
 @app.route('/cart_page', methods=["GET", "POST"])
 def cart_page():
-    food_name = ', '.join(food_list)
+    
+    food_name = list(food_list)
     food_price = total_price
-    combo_number = [i+1 for i in range(len(food_list))]
-    combo_data = zip(combo_number, food_list, [total_price]*len(food_list))
-    return render_template('購物車.html',food_name = food_name,food_price = food_price,combo_number = combo_number ,combo_data=combo_data)
+    return render_template('購物車.html',food_name = food_name,food_price = food_price)
 
+@app.route('/delete_food', methods=["GET", "POST"])
+def del_page():
+    global food_list
+    global total_price
+    del_food = request.form['food_to_delete'].strip()  # 使用strip()刪除兩側空白字符
+    index = food_list.index(del_food)
+    
+    while del_food in food_list:
+        food_list.remove(del_food)
+        del_price = int(price_list[index])
+        total_price = total_price - del_price        
+        break
+    print(food_list)
+    return redirect('/cart_page')
+
+    
 
 
 #      conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
