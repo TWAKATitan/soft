@@ -3,15 +3,14 @@ import psycopg2
 import psycopg2
 import psycopg2.extras
 
-DB_NAME = 'kfc'
+DB_NAME = 'kfc會員'
 DB_USER = 'postgres'
-DB_PASS = 'william1018'
+DB_PASS = 'Leo48923554'
 DB_HOST = 'localhost'
 DB_PORT = '5432'
 
 app = Flask(__name__, template_folder='templates')
 app.secret_key = 'william1018'
-
 
 
 @app.route("/")
@@ -81,10 +80,20 @@ def page_9():
 @app.route("/餐車.html")
 def page_10():
     return render_template('餐車.html')
-  
-@app.route("/餐點內容.html")
-def page_11():
-    return render_template('餐點內容.html')
+
+
+global food_list
+global total_price
+total_price=0
+food_list = []
+
+
+# @app.route("/餐點內容", methods=["GET", "POST"])
+# def page_11():
+#     food_name = get_food_name()
+#     suit_price = get_suit_price()
+#     food_content = list(get_food_content())
+#     return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price, content1=food_content)
 
 @app.route("/首頁2.html")
 def page_12():
@@ -404,6 +413,8 @@ def changepass():
         conn.close()
         return render_template('會員登入.html')
     
+
+    
 @app.route('/order_detail', methods=["GET", 'POST'])
 def order_detail():
     if request.method == 'POST':
@@ -430,6 +441,42 @@ def order_detail():
         
         except Exception as e:
             return f"Error: {str(e)}"
+        
+   
+
+
+# @app.route("/suitt", methods=['GET', 'POST'])
+# def main():
+#     get_food_name_result = get_food_name()
+#     get_suit_price_result = get_suit_price()
+#     suit_result = suit()
+#     get_food_content_result = get_food_content()
+
+#     return f'{get_food_name_result} | {get_suit_price_result} | {suit_result}  | {get_food_content_result}'
+    
+
+# def suit():
+#      if request.method == 'POST':
+#         套餐 = request.form['套餐']
+
+#     conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+#     cur = conn.cursor()
+
+    
+
+#     cur.execute("""INSERT INTO suit_table (suit_name) VALUES (%s)""", (套餐,))  # Use the variable 套餐1 here
+
+        
+
+#     Commit the changes and close the connection
+#     conn.commit()
+#     cur.close()
+#     conn.close()
+        
+#     food_name = get_food_name()
+#     suit_price = get_suit_price()
+#     return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price)
+
 
 @app.route("/suit", methods=['GET', 'POST'])
 def suit():
@@ -446,5 +493,134 @@ def suit():
         cur.close()
         conn.close()
         
-        return render_template('餐點內容.html')
+        food_name = get_food_name()
+        suit_price = get_suit_price()
+        food_content = list(get_food_content())
+        return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price, content1=food_content)
 
+    
+
+def get_food_name():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        cur.execute("SELECT suit_name FROM suit_table ORDER BY suit_id DESC LIMIT 1;")
+        food = cur.fetchone()
+        if food:
+            name = food['suit_name']
+            return name
+        else:
+            print('None')
+            return None
+    finally:
+        cur.close()
+        conn.close()
+ 
+  
+def get_suit_price():
+
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+
+        food_name = get_food_name()
+        cur.execute("SELECT suit_price FROM suit_id WHERE suit_name = %s",(food_name,))
+        food = cur.fetchone()
+
+        if food:
+            price = food['suit_price']
+            return price
+        else:
+            return None
+    finally:
+        cur.close()
+        conn.close()
+
+def get_food_content():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        
+        food_id = get_food_id()
+        cur.execute("SELECT food_name FROM food_content JOIN suit_id ON food_id = id WHERE food_id = %s ;" % (food_id,))
+        food = cur.fetchall()
+
+        food_content = [item[0] for item in food]
+        
+        print(food_content)
+        
+        # for i in food_content:    
+        #     food_list.append(i)
+        
+        
+        for i in food_content:
+            yield i 
+
+    finally:
+        cur.close()
+        conn.close()
+
+def get_food_id():
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    try:
+        food_name = get_food_name()
+        print(type(food_name))
+        cur.execute("SELECT id FROM suit_id WHERE suit_name = %s",(food_name,))
+        food = cur.fetchone()
+        if food:
+            id = food['id']
+            return id
+        else:
+            print('None')
+            return None
+    finally:
+        cur.close()
+        conn.close()
+
+@app.route('/go_car', methods=["GET", 'POST'])
+def car():
+    global total_price
+    if request.method == 'POST':
+        data = request.get_json()
+        name = data.get('Name')
+        price = data.get('Price')
+        food_list.append(name)
+        total_price += int(price)
+        print(total_price)
+        return redirect(url_for('cart_page'))  # 重定向到'cart_page'路由
+    return render_template('購物車.html')
+
+@app.route('/cart_page', methods=["GET", "POST"])
+def cart_page():
+    global food_list, total_price
+    return render_template('購物車.html', food_list=food_list, total_price=total_price)
+
+
+
+#      conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
+#     cur = conn.cursor()
+        
+        
+ #       try:
+  #          name = name.strip()
+   #         price = int(price)
+    #        cur.execute("""
+     #           INSERT INTO already_order (meal_name, meal_price)
+      #          VALUES (%s, %s)
+       #     """, (name, price))
+            
+        #    conn.commit()
+         #   cur.close()
+          #  conn.close()
+            
+           # return render_template('購物車.html')
+        
+       # except Exception as e:
+        #    return f"Error: {str(e)}"
+       
+app.run(debug=True)     
