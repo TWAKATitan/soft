@@ -3,18 +3,15 @@ import psycopg2
 import psycopg2
 import psycopg2.extras
 
-DB_NAME = 'kfc'
+DB_NAME = 'kfc會員'
 DB_USER = 'postgres'
-DB_PASS = 'edgc2959'
+DB_PASS = 'Leo48923554'
 DB_HOST = 'localhost'
 DB_PORT = '5432'
 
 app = Flask(__name__, template_folder='templates')
-app.secret_key = 'edgc2959'
+app.secret_key = 'william1018'
 
-
-
-#-------------------------------HTML Code----------------------------------------------
 
 @app.route("/")
 def home():
@@ -26,8 +23,7 @@ def firstpage():
 
 @app.route("/個人餐.html")
 def home1():
-    total_price = get_order_price()
-    return render_template('個人餐.html', total_price=total_price)
+    return render_template('個人餐.html')
 
 
 @app.route("/會員.html")
@@ -36,8 +32,7 @@ def page_one():
 
 @app.route("/多人餐.html")
 def page_2():
-    total_price = get_order_price()
-    return render_template('多人餐.html', total_price=total_price)
+    return render_template('多人餐.html')
   
 @app.route("/早餐.html")
 def page_3():
@@ -80,20 +75,25 @@ def page_8():
   
 @app.route("/購物車.html")
 def page_9():
-    
     return render_template('購物車.html')
 
 @app.route("/餐車.html")
 def page_10():
-    total_price = get_order_price()
-    return render_template('餐車.html', total_price=total_price)
-  
-@app.route("/餐點內容.html")
-def page_11():
-    food_name = get_food_name()
-    suit_price = get_suit_price()
-    food_content = get_food_content()
-    return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price, food_content=food_content)
+    return render_template('餐車.html')
+
+
+global food_list
+global total_price
+total_price=0
+food_list = []
+
+
+# @app.route("/餐點內容", methods=["GET", "POST"])
+# def page_11():
+#     food_name = get_food_name()
+#     suit_price = get_suit_price()
+#     food_content = list(get_food_content())
+#     return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price, content1=food_content)
 
 @app.route("/首頁2.html")
 def page_12():
@@ -101,15 +101,12 @@ def page_12():
 
 @app.route("/單點.html")
 def page_13():
-    total_price = get_order_price()
-    return render_template('單點.html', total_price=total_price)
+    return render_template('單點.html')
 
 @app.route("/修改資料.html")
 def page_14():
     Acc=get_phone() or get_email()
     return render_template('修改資料.html',Acc = Acc)
-
-#-------------------------------Python code----------------------------------------------
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -448,16 +445,40 @@ def order_detail():
    
 
 
-@app.route("/suit", methods=['GET', 'POST'])
-def main():
-    get_food_name_result = get_food_name()
-    get_suit_price_result = get_suit_price()
-    suit_result = suit()
-    get_food_content_result = get_food_content()
+# @app.route("/suitt", methods=['GET', 'POST'])
+# def main():
+#     get_food_name_result = get_food_name()
+#     get_suit_price_result = get_suit_price()
+#     suit_result = suit()
+#     get_food_content_result = get_food_content()
 
-    return f'{get_food_name_result} | {get_suit_price_result} | {suit_result}  | {get_food_content_result}'
+#     return f'{get_food_name_result} | {get_suit_price_result} | {suit_result}  | {get_food_content_result}'
     
 
+# def suit():
+#      if request.method == 'POST':
+#         套餐 = request.form['套餐']
+
+#     conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+#     cur = conn.cursor()
+
+    
+
+#     cur.execute("""INSERT INTO suit_table (suit_name) VALUES (%s)""", (套餐,))  # Use the variable 套餐1 here
+
+        
+
+#     Commit the changes and close the connection
+#     conn.commit()
+#     cur.close()
+#     conn.close()
+        
+#     food_name = get_food_name()
+#     suit_price = get_suit_price()
+#     return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price)
+
+
+@app.route("/suit", methods=['GET', 'POST'])
 def suit():
     if request.method == 'POST':
         套餐 = request.form['套餐']
@@ -465,11 +486,7 @@ def suit():
         conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
         cur = conn.cursor()
 
-    
-
         cur.execute("""INSERT INTO suit_table (suit_name) VALUES (%s)""", (套餐,))  # Use the variable 套餐1 here
-
-        
 
         # Commit the changes and close the connection
         conn.commit()
@@ -477,9 +494,12 @@ def suit():
         conn.close()
         
         food_name = get_food_name()
-    suit_price = get_suit_price()
-    return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price)
+        suit_price = get_suit_price()
+        food_content = list(get_food_content())
+        return render_template('餐點內容.html', food_name=food_name, suit_price=suit_price, content1=food_content)
+
     
+
 def get_food_name():
     conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -529,9 +549,15 @@ def get_food_content():
         food = cur.fetchall()
 
         food_content = [item[0] for item in food]
-        print(food_content[0])
-        content1 = food_content[0]
-        return content1
+        
+        print(food_content)
+        
+        # for i in food_content:    
+        #     food_list.append(i)
+        
+        
+        for i in food_content:
+            yield i 
 
     finally:
         cur.close()
@@ -543,6 +569,7 @@ def get_food_id():
 
     try:
         food_name = get_food_name()
+        print(type(food_name))
         cur.execute("SELECT id FROM suit_id WHERE suit_name = %s",(food_name,))
         food = cur.fetchone()
         if food:
@@ -555,44 +582,45 @@ def get_food_id():
         cur.close()
         conn.close()
 
-#加入餐車
-@app.route("/getorder", methods=['GET', 'POST'])
-def get_order():
+@app.route('/go_car', methods=["GET", 'POST'])
+def car():
+    global total_price
     if request.method == 'POST':
-        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    try:
-        food_name = get_food_name()
-        food_price = get_suit_price()
-        cur.execute("INSERT INTO already_order (meal_name, meal_price) VALUES (%s, %s);", (food_name, food_price))
-        cur.execute("UPDATE already_order SET total_price = (SELECT SUM(meal_price) FROM already_order);")
-        price = cur.fetchall()
-
-        
-
-        total_price = price['total_price']
+        data = request.get_json()
+        name = data.get('Name')
+        price = data.get('Price')
+        food_list.append(name)
+        total_price += int(price)
         print(total_price)
-        return total_price
+        return redirect(url_for('cart_page'))  # 重定向到'cart_page'路由
+    return render_template('購物車.html')
 
+@app.route('/cart_page', methods=["GET", "POST"])
+def cart_page():
+    global food_list, total_price
+    return render_template('購物車.html', food_list=food_list, total_price=total_price)
+
+
+
+#      conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
+#     cur = conn.cursor()
+        
+        
+ #       try:
+  #          name = name.strip()
+   #         price = int(price)
+    #        cur.execute("""
+     #           INSERT INTO already_order (meal_name, meal_price)
+      #          VALUES (%s, %s)
+       #     """, (name, price))
             
-    finally:   
-        conn.commit()
-        cur.close()
-        conn.close()
-        return redirect('個人餐.html')
-
-#餐車價格
-def get_order_price():
-        conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-
-        cur.execute("SELECT total_price FROM already_order;")
-        price = cur.fetchone()
-
-        total_price = price['total_price']
-  
-        conn.commit()
-        cur.close()
-        conn.close()
-        return total_price
+        #    conn.commit()
+         #   cur.close()
+          #  conn.close()
+            
+           # return render_template('購物車.html')
+        
+       # except Exception as e:
+        #    return f"Error: {str(e)}"
+       
+app.run(debug=True)     
